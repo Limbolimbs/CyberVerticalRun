@@ -1,0 +1,67 @@
+using UnityEngine;
+
+public class PlayerController : MonoBehaviour
+{
+    public float moveSpeed = 5f;
+    public float jumpForce = 12f;
+    public int maxHealth = 7;
+    public Transform groundCheck;
+    public LayerMask groundLayer;
+    public AudioClip slashSound;
+    public Animator animator;
+
+    private Rigidbody2D rb;
+    private AudioSource audioSource;
+    private bool isGrounded;
+    private int currentHealth;
+    private int comboStep = 0;
+    private float comboTimer = 0f;
+
+    void Start()
+    {
+        rb = GetComponent<Rigidbody2D>();
+        audioSource = GetComponent<AudioSource>();
+        currentHealth = maxHealth;
+    }
+
+    void Update()
+    {
+        float moveX = Input.GetAxis("Horizontal");
+        rb.velocity = new Vector2(moveX * moveSpeed, rb.velocity.y);
+        animator.SetFloat("Speed", Mathf.Abs(moveX));
+
+        isGrounded = Physics2D.OverlapCircle(groundCheck.position, 0.2f, groundLayer);
+        animator.SetBool("isGrounded", isGrounded);
+
+        if (isGrounded && Input.GetKeyDown(KeyCode.B))
+        {
+            rb.velocity = new Vector2(rb.velocity.x, jumpForce);
+            animator.SetTrigger("Jump");
+        }
+
+        if (Input.GetKeyDown(KeyCode.A))
+        {
+            comboStep++;
+            comboTimer = 0.5f;
+            if (comboStep > 4) comboStep = 1;
+            animator.SetTrigger("Attack" + comboStep);
+            if (slashSound != null)
+                audioSource.PlayOneShot(slashSound);
+        }
+
+        if (comboTimer > 0)
+            comboTimer -= Time.deltaTime;
+        else
+            comboStep = 0;
+    }
+
+    public void TakeDamage(int dmg)
+    {
+        currentHealth -= dmg;
+        if (currentHealth <= 0)
+        {
+            animator.SetTrigger("Die");
+            this.enabled = false;
+        }
+    }
+}
