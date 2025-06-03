@@ -1,0 +1,51 @@
+using UnityEngine;
+
+public class EnemyAI : MonoBehaviour
+{
+    public int maxHealth = 3;
+    public float speed = 2f;
+    public float chaseRange = 5f;
+    public Transform player;
+
+    private int currentHealth;
+    private Rigidbody2D rb;
+    private Animator animator;
+
+    void Start()
+    {
+        currentHealth = maxHealth;
+        rb = GetComponent<Rigidbody2D>();
+        animator = GetComponent<Animator>();
+    }
+
+    void Update()
+    {
+        if (player == null) return;
+
+        float distance = Vector2.Distance(transform.position, player.position);
+
+        if (distance < chaseRange)
+        {
+            Vector2 dir = (player.position - transform.position).normalized;
+            rb.velocity = new Vector2(dir.x * speed, rb.velocity.y);
+            animator.SetBool("isMoving", true);
+        }
+        else
+        {
+            rb.velocity = new Vector2(0, rb.velocity.y);
+            animator.SetBool("isMoving", false);
+        }
+    }
+
+    public void TakeDamage(int dmg)
+    {
+        currentHealth -= dmg;
+        animator.SetTrigger("Hit");
+
+        if (currentHealth <= 0)
+        {
+            animator.SetTrigger("Die");
+            Destroy(gameObject, 0.5f);
+        }
+    }
+}
